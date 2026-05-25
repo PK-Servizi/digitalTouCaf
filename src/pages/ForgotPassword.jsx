@@ -1,21 +1,32 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, Send, CheckCircle, Loader2 } from 'lucide-react';
 import logo from '../logo/logo-tuocaf.png';
+import authService from '../services/auth.service';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
       setError('Please enter a valid email address');
       return;
     }
     setError('');
-    setSent(true);
+    setLoading(true);
+    try {
+      await authService.forgotPassword(email);
+      setSent(true);
+    } catch (err) {
+      // Still show success to prevent email enumeration
+      setSent(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,10 +89,11 @@ export default function ForgotPassword() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#E87425] to-[#F2943D] hover:from-[#D0621F] hover:to-[#E87425] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-[#E87425] to-[#F2943D] hover:from-[#D0621F] hover:to-[#E87425] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                <Send size={18} />
-                Send Reset Link
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
             </form>
           </>

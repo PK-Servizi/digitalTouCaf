@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, CheckSquare, Square, LogIn, Mail } from 'lucide-react';
+import { Eye, EyeOff, CheckSquare, Square, LogIn, Mail, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import logo from '../logo/logo-tuocaf.png';
 
-export default function Login({ onLogin }) {
+export default function Login() {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
       setError('Please enter your email address');
@@ -25,7 +28,16 @@ export default function Login({ onLogin }) {
       return;
     }
     setError('');
-    onLogin(email.trim());
+    setLoading(true);
+    try {
+      await login(email.trim(), password);
+    } catch (err) {
+      const msg =
+        err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -105,23 +117,15 @@ export default function Login({ onLogin }) {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#E87425] to-[#F2943D] hover:from-[#D0621F] hover:to-[#E87425] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#E87425] to-[#F2943D] hover:from-[#D0621F] hover:to-[#E87425] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <LogIn size={20} />
-            Log In
+            {loading ? <Loader2 size={20} className="animate-spin" /> : <LogIn size={20} />}
+            {loading ? 'Signing in...' : 'Log In'}
           </button>
         </form>
 
-        <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-[#E87425] hover:text-[#D0621F] font-semibold transition-colors">
-              Sign Up
-            </Link>
-          </p>
-        </div>
-
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-gray-400 mt-6">
           TuoCAF &copy; {new Date().getFullYear()} — All rights reserved
         </p>
       </div>

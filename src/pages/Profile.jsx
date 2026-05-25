@@ -1,18 +1,26 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { UserCircle, Mail, Phone, MapPin, Save, Camera, Shield, Bell, CheckCircle } from 'lucide-react';
+import { UserCircle, Mail, Phone, MapPin, Save, Camera, Shield, Bell, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import authService from '../services/auth.service';
 
-export default function Profile({ user }) {
+export default function Profile() {
+  const { user } = useAuth();
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [form, setForm] = useState({
-    name: user?.name || '',
+    name: user?.name || user?.firstName || '',
     email: user?.email || '',
-    phone: '',
+    phone: user?.phone || '',
     address: '',
     city: '',
     bio: '',
   });
+
+  // Password state
+  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState('');
 
   const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -20,6 +28,29 @@ export default function Profile({ user }) {
     e.preventDefault();
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleChangePassword = async () => {
+    setPwError('');
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setPwError('Passwords do not match');
+      return;
+    }
+    if (passwords.newPassword.length < 6) {
+      setPwError('Password must be at least 6 characters');
+      return;
+    }
+    setPwLoading(true);
+    try {
+      await authService.changePassword(passwords.currentPassword, passwords.newPassword);
+      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setPwError(err.response?.data?.message || 'Failed to change password');
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const tabs = [
@@ -42,7 +73,7 @@ export default function Profile({ user }) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-800">My Profile</h1>
         <div className="text-sm text-gray-400">
-          <Link to="/customers" className="hover:text-[#E87425] transition-colors">Home</Link>
+          <Link to="/dashboard" className="hover:text-[#E87425] transition-colors">Home</Link>
           <span className="mx-1">/</span>
           <span className="text-[#E87425] font-medium">Profile</span>
         </div>
@@ -187,11 +218,18 @@ export default function Profile({ user }) {
             {activeTab === 'security' && (
               <div className="p-4 sm:p-6">
                 <h3 className="text-base font-bold text-gray-800 mb-4">Change Password</h3>
+                {pwError && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-lg mb-4 flex items-center gap-2">
+                    <AlertCircle size={16} />{pwError}
+                  </div>
+                )}
                 <div className="space-y-4 max-w-md">
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Current Password</label>
                     <input
                       type="password"
+                      value={passwords.currentPassword}
+                      onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))}
                       placeholder="Enter current password"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#E87425]/30 focus:border-[#E87425] transition-all bg-gray-50/50"
                     />
@@ -200,6 +238,8 @@ export default function Profile({ user }) {
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">New Password</label>
                     <input
                       type="password"
+                      value={passwords.newPassword}
+                      onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))}
                       placeholder="Enter new password"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#E87425]/30 focus:border-[#E87425] transition-all bg-gray-50/50"
                     />
@@ -208,16 +248,19 @@ export default function Profile({ user }) {
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Confirm New Password</label>
                     <input
                       type="password"
+                      value={passwords.confirmPassword}
+                      onChange={(e) => setPasswords(p => ({ ...p, confirmPassword: e.target.value }))}
                       placeholder="Confirm new password"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#E87425]/30 focus:border-[#E87425] transition-all bg-gray-50/50"
                     />
                   </div>
                   <button
-                    onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2500); }}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#E87425] to-[#F2943D] text-white rounded-lg hover:from-[#D0621F] hover:to-[#E87425] text-sm font-medium transition-all shadow-md"
+                    onClick={handleChangePassword}
+                    disabled={pwLoading}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#E87425] to-[#F2943D] text-white rounded-lg hover:from-[#D0621F] hover:to-[#E87425] text-sm font-medium transition-all shadow-md disabled:opacity-60"
                   >
-                    <Shield size={16} />
-                    Update Password
+                    {pwLoading ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
+                    {pwLoading ? 'Updating...' : 'Update Password'}
                   </button>
                 </div>
               </div>
