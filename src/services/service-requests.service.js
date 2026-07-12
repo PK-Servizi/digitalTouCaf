@@ -38,6 +38,13 @@ const serviceRequestsService = {
     const { data } = await api.get('/backoffice/services');
     return data;
   },
+
+  // ─── Resubmit after additional info requested ───
+
+  async resubmit(requestId, notes) {
+    const { data } = await api.post(`/backoffice/service-requests/${requestId}/resubmit`, { notes });
+    return data;
+  },
 };
 
 export default serviceRequestsService;

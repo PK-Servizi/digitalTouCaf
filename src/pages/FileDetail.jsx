@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Paperclip, Download, FileText, Calendar, Hash, Loader2, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import serviceRequestsService from '../services/service-requests.service';
+import { unwrapApiList, unwrapApiValue } from '../utils/apiResponse';
 
 export default function FileDetail() {
   const { id } = useParams();
@@ -23,8 +24,8 @@ export default function FileDetail() {
           serviceRequestsService.getById(id),
           serviceRequestsService.getDocuments(id),
         ]);
-        setRequest(reqRes.data || reqRes);
-        setDocuments(docsRes.data || docsRes || []);
+        setRequest(unwrapApiValue(reqRes));
+        setDocuments(unwrapApiList(docsRes));
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load request details');
       } finally {
@@ -40,7 +41,7 @@ export default function FileDetail() {
     try {
       await serviceRequestsService.uploadDocuments(id, selectedFiles);
       const docsRes = await serviceRequestsService.getDocuments(id);
-      setDocuments(docsRes.data || docsRes || []);
+      setDocuments(unwrapApiList(docsRes));
       setSelectedFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
       setUploadSuccess('Documents uploaded successfully!');

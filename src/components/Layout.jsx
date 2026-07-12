@@ -40,6 +40,7 @@ export default function Layout() {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
     const fetchNotifications = async () => {
       try {
         const res = await notificationsService.getAll({ unread: true, limit: 1 });
@@ -51,7 +52,7 @@ export default function Layout() {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const displayName = user?.name || user?.email?.split('@')[0] || 'User';
 

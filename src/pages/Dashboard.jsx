@@ -4,6 +4,7 @@ import { Users, FolderOpen, FileText, DollarSign, ArrowRight, Clock, CheckCircle
 import dashboardService from '../services/dashboard.service';
 import serviceRequestsService from '../services/service-requests.service';
 import invoicesService from '../services/invoices.service';
+import { unwrapApiList, unwrapApiValue } from '../utils/apiResponse';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -20,9 +21,9 @@ export default function Dashboard() {
           serviceRequestsService.getAll({ page: 1, limit: 5, sortBy: 'createdAt', sortOrder: 'DESC' }),
           invoicesService.getAll({ status: 'pending', page: 1, limit: 5 }),
         ]);
-        setStats(statsRes);
-        setRecentRequests(requestsRes.data || requestsRes.items || []);
-        setPendingInvoices(invoicesRes.data || invoicesRes.items || []);
+        setStats(unwrapApiValue(statsRes));
+        setRecentRequests(unwrapApiList(requestsRes));
+        setPendingInvoices(unwrapApiList(invoicesRes));
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load dashboard');
       } finally {
@@ -41,6 +42,8 @@ export default function Dashboard() {
     };
     return map[status] || 'bg-gray-50 text-gray-700 ring-gray-200';
   };
+
+  const getInvoiceAmount = (invoice) => Number(invoice.amount ?? invoice.totalAmount ?? 0);
 
   if (loading) {
     return (
@@ -158,7 +161,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <span className="text-sm font-bold text-[#E87425]">
-                    €{(inv.totalAmount / 100).toFixed(2)}
+                    €{getInvoiceAmount(inv).toFixed(2)}
                   </span>
                 </div>
               ))

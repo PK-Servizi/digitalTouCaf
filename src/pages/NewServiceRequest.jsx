@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Loader2, AlertCircle, Users, FileText, CheckCircle } from 'lucide-react';
 import customersService from '../services/customers.service';
 import serviceRequestsService from '../services/service-requests.service';
+import { unwrapApiList } from '../utils/apiResponse';
 
 export default function NewServiceRequest() {
   const navigate = useNavigate();
@@ -25,8 +26,8 @@ export default function NewServiceRequest() {
           customersService.getAll({ limit: 200 }),
           serviceRequestsService.getAssignedServices(),
         ]);
-        setCustomers(custRes.data || custRes.items || []);
-        setServices(svcRes.data || svcRes || []);
+        setCustomers(unwrapApiList(custRes));
+        setServices(unwrapApiList(svcRes));
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load data');
       } finally {
@@ -129,7 +130,7 @@ export default function NewServiceRequest() {
               </select>
               {customers.length === 0 && (
                 <p className="text-xs text-gray-400 mt-1">
-                  No customers found. <Link to="/add-customer" className="text-[#E87425] hover:underline">Add one first</Link>.
+                  No customers found. <Link to="/customers/new" className="text-[#E87425] hover:underline">Add one first</Link>.
                 </p>
               )}
             </div>

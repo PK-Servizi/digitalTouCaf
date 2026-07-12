@@ -3,6 +3,19 @@ import authService from '../services/auth.service';
 
 const AuthContext = createContext(null);
 
+function normalizeUser(user) {
+  const roleName = user?.role?.name || user?.roleName || 'backoffice';
+  return {
+    ...user,
+    role: {
+      ...(user?.role || {}),
+      name: roleName,
+      databaseName: user?.role?.databaseName || roleName,
+    },
+    databaseName: user?.databaseName || user?.role?.databaseName || roleName,
+  };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +28,7 @@ export function AuthProvider({ children }) {
         return;
       }
       try {
-        const userData = await authService.me();
+        const userData = normalizeUser(await authService.me());
         setUser(userData);
       } catch {
         localStorage.removeItem('accessToken');
@@ -28,7 +41,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (email, password) => {
-    const userData = await authService.login(email, password);
+    const userData = normalizeUser(await authService.login(email, password));
     setUser(userData);
     return userData;
   }, []);

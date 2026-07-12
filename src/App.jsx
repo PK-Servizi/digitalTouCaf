@@ -24,7 +24,7 @@ function ProtectedRoute({ children }) {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   // Only allow backoffice role users
   const roleName = user?.role?.name?.toLowerCase();
-  if (roleName && roleName !== 'backoffice') {
+  if (roleName !== 'backoffice') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

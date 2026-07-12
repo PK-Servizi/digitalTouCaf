@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Eye, Pencil, Plus, ArrowUpDown, X, User, Phone, CreditCard, ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import customersService from '../services/customers.service';
+import { unwrapApiList, unwrapApiValue } from '../utils/apiResponse';
 
 export default function Customers() {
   const navigate = useNavigate();
@@ -30,8 +31,8 @@ export default function Customers() {
         params.sortOrder = sortDir.toUpperCase();
       }
       const res = await customersService.getAll(params);
-      setCustomers(res.data || res.items || []);
-      setTotalCount(res.total || res.meta?.total || 0);
+      setCustomers(unwrapApiList(res));
+      setTotalCount(Number(unwrapApiValue(res?.total ?? res?.meta?.total ?? 0)) || 0);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load customers');
     } finally {

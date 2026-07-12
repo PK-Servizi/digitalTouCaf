@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Eye, Plus, ArrowUpDown, FolderOpen, CheckCircle, Clock, Loader2, AlertCircle, ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
 import serviceRequestsService from '../services/service-requests.service';
+import { unwrapApiList, unwrapApiValue } from '../utils/apiResponse';
 
 export default function Files() {
   const navigate = useNavigate();
@@ -22,8 +23,8 @@ export default function Files() {
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
       const res = await serviceRequestsService.getAll(params);
-      setRequests(res.data || res.items || []);
-      setTotalCount(res.total || res.meta?.total || 0);
+      setRequests(unwrapApiList(res));
+      setTotalCount(Number(unwrapApiValue(res?.total ?? res?.meta?.total ?? 0)) || 0);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load service requests');
     } finally {

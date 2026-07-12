@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { DollarSign, ArrowRightLeft, TrendingUp, Search, Loader2, CreditCard, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import invoicesService from '../services/invoices.service';
+import { unwrapApiList, unwrapApiValue } from '../utils/apiResponse';
 
 export default function Movements() {
   const [invoices, setInvoices] = useState([]);
@@ -22,8 +23,8 @@ export default function Movements() {
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
       const res = await invoicesService.getAll(params);
-      setInvoices(res.data || res.items || []);
-      setTotalCount(res.total || res.meta?.total || 0);
+      setInvoices(unwrapApiList(res));
+      setTotalCount(Number(unwrapApiValue(res?.total ?? res?.meta?.total ?? 0)) || 0);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load invoices');
     } finally {
